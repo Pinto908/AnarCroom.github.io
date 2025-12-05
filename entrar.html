@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Entrar Sala</title>
+</head>
+<body>
+    <h1>Entrar numa sala</h1>
+    <form action="" onsubmit="entrarSala(); return false;">
+        <input id="codigo" placeholder="Código da Sala" required>
+        <button type="submit">Entrar</button>
+    </form>
+    <a href="{{ url_for('index') }}">Voltar</a>
+
+    <script>
+    function entrarSala() {
+        const codigo = document.getElementById("codigo").value;
+        window.location.href = `/sala/${codigo}`;
+    }
+    </script>
+</body>
+</html>

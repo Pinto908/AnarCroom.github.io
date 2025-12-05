@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sala {{ codigo }}</title>
+    <style>
+        #messages { border:1px solid #000; height:300px; overflow:auto; margin-top:10px; padding:5px; }
+        input, button { margin-top:5px; }
+    </style>
+</head>
+<body>
+    <h1>Anarcroom - Sala {{ codigo }}</h1>
+    <div>
+        <input id="user" placeholder="Nome" required>
+        <button onclick="entrar()">Entrar na sala</button><br>
+    </div>
+    <div id="messages"></div>
+    <div>
+        <input id="msg" placeholder="Mensagem" disabled>
+        <button id="btnEnviar" onclick="enviar()" disabled>Enviar</button>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+
+
+        console.log("Connecting to:", serverURL);
+
+        const socket = io(serverURL, { 
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
+        });
+
+        let username = "";
+        let joined = false;
+        let roomCode = "{{ codigo }}";
+
+        socket.on("connect", () => {
+            console.log("✓ Socket connected:", socket.id);
+        });
+
+        socket.on("disconnect", () => {
+            console.log("✗ Socket disconnected");
+        });
+
+        socket.on("connect_error", err => { 
+            console.error("✗ Erro de conexão:", err); 
+        });
+
+        function entrar() {
+            username = document.getElementById("user").value.trim();
+            if (!username) return alert("Escolhe um nome!");
+            if (joined) return;
+
+            console.log("Entrando na sala:", roomCode, "com utilizador:", username);
+            socket.emit("join", { username, room: roomCode });
+            joined = true;
+            document.getElementById("user").disabled = true;
+            document.getElementById("msg").disabled = false;
+            document.getElementById("btnEnviar").disabled = false;
+            document.getElementById("msg").focus();
+        }
+
+        function enviar() {
+            if (!joined) return alert("Primeiro entra na sala!");
+            const msg = document.getElementById("msg").value.trim();
+            if (!msg) return;
+
+            console.log("Enviando mensagem para sala:", roomCode, "msg:", msg);
+            socket.emit("message", { user: username, msg: msg, room: roomCode });
+            document.getElementById("msg").value = "";
+        }
+
+        
+        document.getElementById("msg").addEventListener("keydown", function(e) {
+            if (e.key === "Enter" && joined) {
+                enviar();
+            }
+        });
+
+        socket.on("message", (msg) => {
+            console.log("✓ Mensagem recebida do servidor:", msg);
+            const div = document.getElementById("messages");
+            const p = document.createElement("p");
+            p.textContent = msg;
+            div.appendChild(p);
+            div.scrollTop = div.scrollHeight;
+        });
+
+        socket.on("response", (data) => {
+            console.log("✓ Resposta recebida:", data);
+            const div = document.getElementById("messages");
+            const p = document.createElement("p");
+            p.textContent = data;
+            div.appendChild(p);
+            div.scrollTop = div.scrollHeight;
+        });
+    </script>
+</body>
+</html>
